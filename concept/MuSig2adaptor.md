@@ -25,7 +25,7 @@ generated with `secp256k1_keypair_create` and obtained with `secp256k1_keypair_p
 
 Alice does the Key Aggregation in MuSig2
 
-$$ (1) \hspace{5pt} P = a_a \cdot P_a + a_b \cdot P_b$$
+$$(1) \hspace{5pt} P = a_a \cdot P_a + a_b \cdot P_b$$
 $where \hspace{5pt} a_{a/b} = H_{agg}(sha256(P_a,P_b),P_{a/b})$\
 by calling `secp256k1_musig_pubkey_agg` with the pubkeys of all participants (I am omitting that $a_b=1$ in the implementation).
 
@@ -38,10 +38,10 @@ Up to here, its independent of the message and can be precalculated.
 
 ### Sign round 2
 From collected Nonce the  aggregated Nonce $R$ is calculated:
-$$ (2)\hspace{5pt} R_1 = R_{a,1} + R_{b,1}$$
-$$ R_2 = R_{a,2} + R_{b,2}$$
+$$(2)\hspace{5pt} R_1 = R_{a,1} + R_{b,1}$$
+$$R_2 = R_{a,2} + R_{b,2}$$
 $$b = H_{non}(R_1 , R_2, P, m) $$
-$$ (3)\hspace{5pt} R = R_1 + b \cdot R_2 + T$$
+$$(3)\hspace{5pt} R = R_1 + b \cdot R_2 + T$$
 Note that the $T$ is added to $R$, this seperates normal MuSig2 from adaptive MuSig2.
 This is done via `secp256k1_musig_nonce_agg` and `secp256k1_musig_nonce_process(T)`. This is split into 2 methods, in other scenarios there could be one party aggregating the nounces and sending them around, which is better than everyone sending to everyone.
 
@@ -63,16 +63,15 @@ $$s=s_a+s_b$$
 with the method `secp256k1_musig_partial_sig_agg`. Since we added a $T$ into the signature (3), this is only  a pre-signature, not a valid signature. 
 We can prove that this pre-signature is indeed a valid adaptor signature by multiplying with $G$ and setting $e:=H_{sig}(R,P,m)$:
 $$s\cdot G=s_a\cdot G+s_b\cdot G $$
-$$
-=(r_{a,1} + b \cdot r_{a,2} + a_a \cdot e  \cdot p_a)\cdot G + (r_{b,1}b \cdot r_{b,2} + a_b \cdot e \cdot p_b)\cdot G$$
+$$=(r_{a,1} + b \cdot r_{a,2} + a_a \cdot e  \cdot p_a)\cdot G + (r_{b,1}b \cdot r_{b,2} + a_b \cdot e \cdot p_b)\cdot G$$
 $$=R_{a,1}+b\cdot R_{a,2} + a_a\cdot e \cdot P_a + R_{b,1}+b\cdot R_{b,2} + a_b\cdot e \cdot P_b;|with (2)$$
-$$ = R_1 + b \cdot R_2 + a_a \cdot e  \cdot P_a + a_b  \cdot e \cdot P_b;| with (1)$$
+$$= R_1 + b \cdot R_2 + a_a \cdot e  \cdot P_a + a_b  \cdot e \cdot P_b;| with (1)$$
 $$= R_1 + b \cdot R_2 +  e \cdot P;|with (3)$$
 $$= R - T + e \cdot P$$
 
 that means
 $$s \cdot G + T = R+e \cdot P$$
-$$ (s + t) \cdot G = R + e \cdot P$$
+$$(s + t) \cdot G = R + e \cdot P$$
 so with the discrete logarithm (DLOG) of $T$, which is  $t$, we would have a valid signature.
 
 All parties involved extract this session's `nonce_parity` with `secp256k1_musig_nonce_parity`. This is needed because of some internal implementation details, namely how we handle curve point, as compressed Pubkey or x-only Pubkey. Alice has the knowledge of $t$ and can make this a valid signature.
